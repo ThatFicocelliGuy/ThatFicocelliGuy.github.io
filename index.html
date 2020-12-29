@@ -27,24 +27,40 @@
 </html>
 
 <script>
-
     const ADULT_WEIGHT = 1;
     const KID_WEIGHT = .5;
     const BALANCE_TOLERANCE = 10;
 
-    function setup() {
-        const data = getExistingData();
+    async function setup() {
+        const data = await getExistingData();
         if (data) {
             addInputRow(data.length, data);
+            update();
         } else {
             addInputRow(3);
         }
     }
 
-    function getExistingData () {
+    async function getExistingData () {
         // TODO
-        const sample_data = [{"id":"row0","name":"Me","expenses":"100","adults":"1","kids":"","arrival":"2020-12-29","departure":"2020-12-29","duration":2,"valid":true,"points":2,"expenseShare":"292.50","difference":"192.50"},{"id":"row1","name":"You","expenses":"400","adults":"2","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":2,"expenseShare":"292.50","difference":"-107.50"},{"id":"row2","name":"Him","expenses":"300","adults":"1","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":1,"expenseShare":"146.25","difference":"-153.75"},{"id":"row3","name":"them","expenses":"370","adults":"3","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":3,"expenseShare":"438.75","difference":"68.75"}];
-        return sample_data;
+        //const sample_data = [{"id":"row0","name":"Me","expenses":"100","adults":"1","kids":"","arrival":"2020-12-29","departure":"2020-12-29","duration":2,"valid":true,"points":2,"expenseShare":"292.50","difference":"192.50"},{"id":"row1","name":"You","expenses":"400","adults":"2","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":2,"expenseShare":"292.50","difference":"-107.50"},{"id":"row2","name":"Him","expenses":"300","adults":"1","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":1,"expenseShare":"146.25","difference":"-153.75"},{"id":"row3","name":"them","expenses":"370","adults":"3","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":3,"expenseShare":"438.75","difference":"68.75"}];
+        //return sample_data;
+
+        const searchParams = new URLSearchParams(window.location.search)
+        const data = searchParams.get("data");
+
+        if (data) {
+            try {
+                const jsonString = atob(data);
+                const dataObject = await JSON.parse(jsonString);
+                return dataObject;
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        //return sample_data;
+        return null;
     }
 
     function addInputRow(rows, data = {}) {
@@ -63,11 +79,11 @@
             row.id = `row${i + rowId}`;
             row.classList.add("inputRow");
             row.innerHTML = `<td class="name"><input name="name" type="text" ${getKey(i, "name")} onblur="update()"/></td>
-                <td class="expenses">$<input name="expenses" type="number" step="any" ${getKey(i, "expenses")} onchange="update()"/></td>
-                <td class="adults"><input name="adults" type="number" ${getKey(i, "adults")} onchange="update()"/></td>
-                <td class="kids"><input name="kids" type="number" ${getKey(i, "kids")} onchange="update()"/></td>
-                <td class="arrival"><input name="arrival" type="date" ${getKey(i, "arrival")} onchange="update()"/></td>
-                <td class="departure"><input name="departure" type="date" ${getKey(i, "departure")} onchange="update()"/></td>
+                <td class="expenses">$<input name="expenses" type="number" step="any" ${getKey(i, "exp")} onchange="update()"/></td>
+                <td class="adults"><input name="adults" type="number" ${getKey(i, "ad")} onchange="update()"/></td>
+                <td class="kids"><input name="kids" type="number" ${getKey(i, "kd")} onchange="update()"/></td>
+                <td class="arrival"><input name="arrival" type="date" ${getKey(i, "arr")} onchange="update()"/></td>
+                <td class="departure"><input name="departure" type="date" ${getKey(i, "dep")} onchange="update()"/></td>
                 <td class="validate"></td>`
             inputBody.appendChild(row);
         }
@@ -93,11 +109,11 @@
             const data = {
                 id: row.id,
                 name: row.querySelector(".name input").value,
-                expenses: row.querySelector(".expenses input").value,
-                adults: row.querySelector(".adults input").value,
-                kids: row.querySelector(".kids input").value,
-                arrival: row.querySelector(".arrival input").value,
-                departure: row.querySelector(".departure input").value
+                exp: row.querySelector(".expenses input").value,
+                ad: row.querySelector(".adults input").value,
+                kd: row.querySelector(".kids input").value,
+                arr: row.querySelector(".arrival input").value,
+                dep: row.querySelector(".departure input").value
             }
             
             dataSet.push(data);
@@ -107,42 +123,50 @@
     }
 
     function updateQueryParams(data) {
+        const dataString = JSON.stringify(data);
+        const base64String = btoa(dataString);
+        if ('URLSearchParams' in window) {
+            const searchParams = new URLSearchParams(window.location.search)
+            searchParams.set("data", base64String);
+            const newRelativePathQuery = window.location.pathname + '?' + searchParams.toString();
+            history.pushState(null, '', newRelativePathQuery);
+        }
 
     }
 
     function addCalculatedValues(dataSet) {
 
         dataSet.forEach(data => {
-            if (!data.arrival && !data.departure) {
+            if (!data.arr && !data.dep) {
                 data.duration = 1;
             } else {
                 data.duration = (
-                    (new Date(data.departure).getTime() - new Date(data.arrival).getTime())
+                    (new Date(data.dep).getTime() - new Date(data.arr).getTime())
                     / (1000 * 3600 * 24)
                 ) + 1;
             }
-            data.valid = data.name && data.expenses !== "" && (data.adults || data.kids) && data.duration > 0;
-            data.points = (data.adults * ADULT_WEIGHT + data.kids * KID_WEIGHT) * data.duration;
+            data.valid = data.name && data.exp !== "" && (data.ad || data.kd) && data.duration > 0;
+            data.points = (data.ad * ADULT_WEIGHT + data.kd * KID_WEIGHT) * data.duration;
 
             document.querySelector(`#${data.id} .validate`).innerHTML = data.valid ? "<span class='valid'>☑</span>" : "<span class='invalid'>X</span>";
         });
     }
 
     function calculate(validData) {
-        const totalExpenses = validData.reduce((acc, data) => +data.expenses + acc, 0);
+        const totalExpenses = validData.reduce((acc, data) => +data.exp + acc, 0);
         const totalPoints = validData.reduce((acc, data) => +data.points + acc, 0);
         const pointValue = totalExpenses / totalPoints;
 
         validData.forEach(data => {
             data.expenseShare = (data.points * pointValue).toFixed(2);
-            data.difference = ((data.points * pointValue) - data.expenses).toFixed(2);
+            data.difference = ((data.points * pointValue) - data.exp).toFixed(2);
         })
 
         const rowsString = validData.map(data =>
             `<tr>
                 <td>${data.name}</td>
                 <td>${data.points}</td>
-                <td>$ ${data.expenses}</td>
+                <td>$ ${data.exp}</td>
                 <td>$ ${data.expenseShare}</td>
                 <td>$ ${data.difference}</td>
             </tr>`
