@@ -6,5 +6,141 @@
 </head>
 <body>
 
+<table class="inputTable">
+    <tbody class="inputTableBody">
+    <tr>
+        <th>Group Name</th>
+        <th>Expenses</th>
+        <th>Adults</th>
+        <th>Kids</th>
+        <th>Arrival</th>
+        <th>Departure</th>
+        <th>Valid Data</th>
+    </tr>
+    </tbody>
+</table>
+
+<button onclick="update()">Calculate!</button>
+
+<div id="calcs"></div>
+
 </body>
 </html>
+
+<script>
+
+    const ADULT_WEIGHT = 1;
+    const KID_WEIGHT = .5;
+
+    function setup() {
+        addInputRow(5);
+    }
+
+    function addInputRow(rows) {
+        const inputBody = document.querySelector(".inputTableBody");
+        let rowId = 0;
+        while (document.querySelector(`row${rowId}`)) {
+            rowId++
+        }
+
+        for (let i = rowId; i < rows + rowId; i++) {
+
+            const row = document.createElement("tr");
+            row.id = `row${i}`;
+            row.classList.add("inputRow");
+            row.innerHTML = `<td class="name"><input name="name" type="text" onblur="update()"/></td>
+                <td class="expenses"><input name="expenses" type="number" onchange="update()"/></td>
+                <td class="adults"><input name="adults" type="number" onchange="update()"/></td>
+                <td class="kids"><input name="kids" type="number" onchange="update()"/></td>
+                <td class="arrival"><input name="arrival" type="date" onchange="update()"/></td>
+                <td class="departure"><input name="departure" type="date" onchange="update()"/></td>
+                <td class="validate"></td>`
+            inputBody.appendChild(row);
+        }
+    }
+
+    function update() {
+        getData();
+
+        calculate();
+
+        getTransactions();
+    }
+
+    function getData() {
+        const rows = document.querySelectorAll(".inputRow");
+        window.inputData = [];
+
+        rows.forEach(row => {
+            const data = {}
+            data.id = row.id;
+            data.name = row.querySelector(".name input").value;
+            data.expenses = row.querySelector(".expenses input").value;
+            data.adults = row.querySelector(".adults input").value;
+            data.kids = row.querySelector(".kids input").value;
+            data.arrival = row.querySelector(".arrival input").value;
+            data.departure = row.querySelector(".departure input").value;
+            if (!data.arrival && !data.departure) {
+                data.duration = 1;
+            } else {
+                data.duration = (
+                    (new Date(data.departure).getTime() - new Date(data.arrival).getTime())
+                    / (1000 * 3600 * 24)
+                ) + 1;
+            }
+            data.valid = data.name && data.expenses !== "" && (data.adults || data.kids) && data.duration > 0;
+            data.points = (data.adults * ADULT_WEIGHT + data.kids * KID_WEIGHT) * data.duration
+
+            window.inputData.push(data);
+
+            row.querySelector(".validate").innerHTML = data.valid ? "yes" : "no";
+        })
+
+        console.log(window.inputData);
+    }
+
+    function calculate() {
+        const validData = window.inputData.filter(data => data.valid);
+        const totalExpenses = validData.reduce((acc, data) => +data.expenses + acc, 0);
+        const totalPoints = validData.reduce((acc, data) => +data.points + acc, 0);
+        const pointValue = totalExpenses / totalPoints;
+
+        validData.forEach(data => {
+            data.expenseShare = (data.points * pointValue).toFixed(2);
+            data.difference = ((data.points * pointValue) - data.expenses).toFixed(2);
+        })
+
+        const rowsString = validData.map(data =>
+            `<tr>
+                <td>${data.name}</td>
+                <td>${data.expenses}</td>
+                <td>${data.points}</td>
+                <td>${data.expenseShare}</td>
+                <td>${data.difference}</td>
+            </tr>`
+        ).join("");
+
+
+        if (validData.length) {
+            document.getElementById("calcs").innerHTML = `
+                <table>
+                    <tr>
+                        <td>Name</td>
+                        <td>Expenses</td>
+                        <td>Points</td>
+                        <td>Expense Share</td>
+                        <td>Difference</td>
+                    </tr>
+                    ${rowsString}
+                </table>`
+        }
+    }
+
+    function getTransactions() {
+        const validData = window.inputData.filter(data => data.valid);
+        // TODO
+    }
+
+    setup();
+
+</script>
