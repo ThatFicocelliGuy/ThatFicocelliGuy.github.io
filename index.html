@@ -31,40 +31,56 @@
 
     const ADULT_WEIGHT = 1;
     const KID_WEIGHT = .5;
+    const BALANCE_TOLERANCE = 10;
 
     function setup() {
-        addInputRow(5);
+        const data = getExistingData();
+        if (data) {
+            addInputRow(data.length, data);
+        } else {
+            addInputRow(5);
+        }
     }
 
-    function addInputRow(rows) {
+    function getExistingData () {
+        // TODO
+        const sample_data = [{"id":"row0","name":"Me","expenses":"100","adults":"1","kids":"","arrival":"2020-12-29","departure":"2020-12-29","duration":2,"valid":true,"points":2,"expenseShare":"292.50","difference":"192.50"},{"id":"row1","name":"You","expenses":"400","adults":"2","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":2,"expenseShare":"292.50","difference":"-107.50"},{"id":"row2","name":"Him","expenses":"300","adults":"1","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":1,"expenseShare":"146.25","difference":"-153.75"},{"id":"row3","name":"them","expenses":"370","adults":"3","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":3,"expenseShare":"438.75","difference":"68.75"},{"id":"row4","name":"","expenses":"","adults":"","kids":"","arrival":"","departure":"","duration":1,"valid":"","points":0}];
+        return sample_data;
+    }
+
+    function addInputRow(rows, data) {
         const inputBody = document.querySelector(".inputTableBody");
         let rowId = 0;
         while (document.querySelector(`row${rowId}`)) {
             rowId++
         }
 
-        for (let i = rowId; i < rows + rowId; i++) {
+        function getKey(i, name) {
+            return data[i] && data[i][name] ? `value="${data[i][name]}"` : "";
+        }
 
+        for (let i = 0; i < rows; i++) {
             const row = document.createElement("tr");
-            row.id = `row${i}`;
+            row.id = `row${i + rowId}`;
             row.classList.add("inputRow");
-            row.innerHTML = `<td class="name"><input name="name" type="text" onblur="update()"/></td>
-                <td class="expenses"><input name="expenses" type="number" onchange="update()"/></td>
-                <td class="adults"><input name="adults" type="number" onchange="update()"/></td>
-                <td class="kids"><input name="kids" type="number" onchange="update()"/></td>
-                <td class="arrival"><input name="arrival" type="date" onchange="update()"/></td>
-                <td class="departure"><input name="departure" type="date" onchange="update()"/></td>
+            row.innerHTML = `<td class="name"><input name="name" type="text" ${getKey(i, "name")} onblur="update()"/></td>
+                <td class="expenses"><input name="expenses" type="number" ${getKey(i, "expenses")} onchange="update()"/></td>
+                <td class="adults"><input name="adults" type="number" ${getKey(i, "adults")} onchange="update()"/></td>
+                <td class="kids"><input name="kids" type="number" ${getKey(i, "kids")} onchange="update()"/></td>
+                <td class="arrival"><input name="arrival" type="date" ${getKey(i, "arrival")} onchange="update()"/></td>
+                <td class="departure"><input name="departure" type="date" ${getKey(i, "departure")} onchange="update()"/></td>
                 <td class="validate"></td>`
             inputBody.appendChild(row);
         }
     }
 
     function update() {
-        getData();
+        const data = getData();
+        const validData = data.filter(group => group.valid);
 
-        calculate();
+        calculate(validData);
 
-        getTransactions();
+        getTransactions(validData);
     }
 
     function getData() {
@@ -96,11 +112,10 @@
             row.querySelector(".validate").innerHTML = data.valid ? "yes" : "no";
         })
 
-        console.log(window.inputData);
+        return window.inputData;
     }
 
-    function calculate() {
-        const validData = window.inputData.filter(data => data.valid);
+    function calculate(validData) {
         const totalExpenses = validData.reduce((acc, data) => +data.expenses + acc, 0);
         const totalPoints = validData.reduce((acc, data) => +data.points + acc, 0);
         const pointValue = totalExpenses / totalPoints;
@@ -136,10 +151,43 @@
         }
     }
 
-    function getTransactions() {
-        const validData = window.inputData.filter(data => data.valid);
+    function getTransactions(validData) {
         // TODO
+        let subsets = getBalancedSubsets(validData);
+        debugger;
+
     }
+    function getBalancedSubsets(validData) {
+        // ignore all subsets that are empty or the full set
+        const subsets = getAllSubsets(validData)
+            .filter(subset => subset.length);
+
+        // Find any subsets who sum to within the balance tolerance
+        // This finds any sub-groups that can be treated as their own ledger with minimal loss
+        const balancedSubsets = subsets.filter(subset =>
+                Math.abs(
+                    subset.reduce((acc, data) => +data.difference + acc, 0)
+                ) < BALANCE_TOLERANCE
+            );
+
+        if (balancedSubsets.length > 1) {
+            // If there are balanced subsets other than the full set, only return those
+            return balancedSubsets.filter(subset => subset.length < validData.length)
+        } else {
+            // return [[...validData]]
+            return balancedSubsets;
+        }
+    }
+
+    function getAllSubsets(array) {
+        return array.reduce(
+            (subsets, value) => subsets.concat(
+                subsets.map(set => [value,...set])
+            ),
+            [[]]
+        );
+    }
+
 
     setup();
 
