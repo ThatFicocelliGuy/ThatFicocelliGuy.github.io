@@ -19,7 +19,7 @@
     </tr>
     </tbody>
 </table>
-<button class="addRow" onclick="addInputRow(1)">[ + ] Add Another Row</button>
+<button class="addRow" onclick="addInputRows(1)">[ + ] Add Another Row</button>
 <button class="calc" onclick="update()">Calculate!</button>
 <div id="calcs"></div>
 
@@ -34,36 +34,32 @@
     async function setup() {
         const data = await getExistingData();
         if (data) {
-            addInputRow(data.length, data);
+            addInputRows(data.length, data);
             update();
         } else {
-            addInputRow(3);
+            addInputRows(3);
         }
     }
 
     async function getExistingData () {
-        // TODO
-        //const sample_data = [{"id":"row0","name":"Me","expenses":"100","adults":"1","kids":"","arrival":"2020-12-29","departure":"2020-12-29","duration":2,"valid":true,"points":2,"expenseShare":"292.50","difference":"192.50"},{"id":"row1","name":"You","expenses":"400","adults":"2","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":2,"expenseShare":"292.50","difference":"-107.50"},{"id":"row2","name":"Him","expenses":"300","adults":"1","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":1,"expenseShare":"146.25","difference":"-153.75"},{"id":"row3","name":"them","expenses":"370","adults":"3","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":3,"expenseShare":"438.75","difference":"68.75"}];
-        //return sample_data;
-
         const searchParams = new URLSearchParams(window.location.search)
         const data = searchParams.get("data");
 
         if (data) {
             try {
                 const jsonString = atob(data);
-                const dataObject = await JSON.parse(jsonString);
-                return dataObject;
+                return await JSON.parse(jsonString);
             } catch(e) {
                 console.error(e);
             }
         }
 
+        //const sample_data = [{"id":"row0","name":"Me","expenses":"100","adults":"1","kids":"","arrival":"2020-12-29","departure":"2020-12-29","duration":2,"valid":true,"points":2,"expenseShare":"292.50","difference":"192.50"},{"id":"row1","name":"You","expenses":"400","adults":"2","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":2,"expenseShare":"292.50","difference":"-107.50"},{"id":"row2","name":"Him","expenses":"300","adults":"1","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":1,"expenseShare":"146.25","difference":"-153.75"},{"id":"row3","name":"them","expenses":"370","adults":"3","kids":"","arrival":"","departure":"","duration":1,"valid":true,"points":3,"expenseShare":"438.75","difference":"68.75"}];
         //return sample_data;
         return null;
     }
 
-    function addInputRow(rows, data = {}) {
+    function addInputRows(rows, data = {}) {
         const inputBody = document.querySelector(".inputTableBody");
         let rowId = 0;
         while (document.getElementById(`row${rowId}`)) {
