@@ -22,6 +22,7 @@
 <button class="addRow" onclick="addInputRows(1)">[ + ] Add Another Row</button>
 <button class="calc" onclick="update()">Calculate!</button>
 <div id="calcs"></div>
+<div id="transactions"></div>
 
 </body>
 </html>
@@ -30,6 +31,7 @@
     const ADULT_WEIGHT = 1;
     const KID_WEIGHT = .5;
     const BALANCE_TOLERANCE = 10;
+    const TRANSACTION_TOLERANCE = 5;
 
     async function setup() {
         const data = await getExistingData();
@@ -93,8 +95,10 @@
 
         const validData = data.filter(group => group.valid);
 
-        calculate(validData);
-        getTransactions(validData);
+        calculateShares(validData);
+
+        const transactions = getTransactions(validData);
+        displayTransactions(transactions);
     }
 
     function getFormData() {
@@ -148,7 +152,7 @@
         });
     }
 
-    function calculate(validData) {
+    function calculateShares(validData) {
         const totalExpenses = validData.reduce((acc, data) => +data.exp + acc, 0);
         const totalPoints = validData.reduce((acc, data) => +data.points + acc, 0);
         const pointValue = totalExpenses / totalPoints;
@@ -177,7 +181,7 @@
                         <td>Points</td>
                         <td>Expenses</td>
                         <td>Expense Share</td>
-                        <td>Difference</td>
+                        <td>Amount Owed</td>
                     </tr>
                     ${rowsString}
                 </table>`
@@ -185,11 +189,93 @@
     }
 
     function getTransactions(validData) {
-        let subsets = getBalancedSubsets(validData);
+        const subsets = getBalancedSubsets(validData);
+        let transactions = [];
 
-        // TODO
+        subsets.forEach(groups => {
+            const simplifiedData = groups
+                // simplify into only needed data, and avoid editing the original dataset
+                .map(group => ({
+                    name: group.name,
+                    difference: group.difference
+                }))
+                // Sort from most owed to most in debt
+                .sort((group1, group2) => group2.difference - group1.difference);
 
+            // Keep processing until all of the transactions are done
+            while (simplifiedData.length > 1) {
+                const creditor = simplifiedData.pop();
+
+                // Keep making transactions until debt is settled
+                while (Math.abs(creditor.difference) > TRANSACTION_TOLERANCE) {
+                    const debtor = simplifiedData[0];
+
+                    // Determine how far the debtor's balance would go towards covering the creditor's due
+                    const comparison = debtor.difference - Math.abs(creditor.difference);
+                    // If the remaining debt is roughly equal to the creditor's due,
+                    // the debtor pays their remaining debt to the creditor, and clears the creditor
+                    if (Math.abs(comparison) < TRANSACTION_TOLERANCE) {
+                        transactions.push({
+                            creditor: creditor.name,
+                            debtor: debtor.name,
+                            amount: 5 * Math.round((Math.abs(creditor.difference)/5)) // round to nearest $5
+                        });
+                        creditor.difference = 0;
+                        simplifiedData.shift();
+                    }
+                    // If the debtor owes much more than the current creditor is owed
+                    // Make a transaction and clear the current creditor
+                    else if (comparison < 0) {
+                        transactions.push({
+                            creditor: creditor.name,
+                            debtor: debtor.name,
+                            amount: 5 * Math.round((Math.abs(debtor.difference)/5)) // round to nearest $5
+                        });
+                        creditor.difference -= debtor.difference;
+                        simplifiedData.shift();
+                    }
+                    // If the debt is just a part of what is owed to the current creditor,
+                    // make a transaction and update the creditor's due
+                    else {
+                        transactions.push({
+                            creditor: creditor.name,
+                            debtor: debtor.name,
+                            amount: 5 * Math.round((Math.abs(creditor.difference)/5)) // round to nearest $5
+                        });
+                        debtor.difference -= creditor.difference;
+                    }
+                }
+
+            }
+        })
+
+        return transactions;
     }
+
+    function displayTransactions(transactions) {
+        const rowsString = transactions.map(data =>
+            `<tr>
+                <td>${data.debtor}</td>
+                <td>${data.creditor}</td>
+                <td>$ ${data.amount}</td>
+            </tr>`
+        ).join("");
+
+
+        if (transactions.length) {
+            document.getElementById("transactions").innerHTML = `<h3>Suggested payments:</h3>
+                <table>
+                    <tr>
+                        <td>Payer</td>
+                        <td>To the order of</td>
+                        <td>Amount</td>
+                    </tr>
+                    ${rowsString}
+                </table>`
+        }
+    }
+    
+
     function getBalancedSubsets(validData) {
         // ignore all subsets that are empty or the full set
         const subsets = getAllSubsets(validData)
