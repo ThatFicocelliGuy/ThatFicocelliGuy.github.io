@@ -146,7 +146,7 @@
                     / (1000 * 3600 * 24)
                 ) + 1;
             }
-            data.valid = data.name && data.exp !== "" && (data.ad || data.kd) && data.duration > 0;
+            data.valid = data.name && data.exp !== "" && (+data.ad || +data.kd) && data.duration > 0;
             data.points = (data.ad * ADULT_WEIGHT + data.kd * KID_WEIGHT) * data.duration;
 
             document.querySelector(`#${data.id} .validate`).innerHTML = data.valid ? "<span class='valid'>☑</span>" : "<span class='invalid'>X</span>";
@@ -247,6 +247,7 @@
                             amount: 5 * Math.round((Math.abs(creditor.difference)/5)) // round to nearest $5
                         });
                         debtor.difference += creditor.difference;
+                        creditor.difference = 0;
                     }
                 }
 
@@ -297,7 +298,6 @@
             // If there are balanced subsets other than the full set, only return those
             return balancedSubsets.filter(subset => subset.length < validData.length)
         } else {
-            // return [[...validData]]
             return balancedSubsets;
         }
     }
