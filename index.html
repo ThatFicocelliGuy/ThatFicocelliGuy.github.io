@@ -198,17 +198,20 @@
                 // simplify into only needed data, and avoid editing the original dataset
                 .map(group => ({
                     name: group.name,
-                    difference: group.difference
+                    difference: +group.difference
                 }))
                 // Sort from most owed to most in debt
                 .sort((group1, group2) => group2.difference - group1.difference);
 
+            let fallback = 0;
             // Keep processing until all of the transactions are done
-            while (simplifiedData.length > 1) {
+            while (simplifiedData.length > 1 && fallback < 1000) {
+                fallback++;
                 const creditor = simplifiedData.pop();
 
                 // Keep making transactions until debt is settled
-                while (Math.abs(creditor.difference) > TRANSACTION_TOLERANCE) {
+                while (Math.abs(creditor.difference) > TRANSACTION_TOLERANCE && simplifiedData.length && fallback < 1000) {
+                    fallback++
                     const debtor = simplifiedData[0];
 
                     // Determine how far the debtor's balance would go towards covering the creditor's due
@@ -232,7 +235,7 @@
                             debtor: debtor.name,
                             amount: 5 * Math.round((Math.abs(debtor.difference)/5)) // round to nearest $5
                         });
-                        creditor.difference -= debtor.difference;
+                        creditor.difference += debtor.difference;
                         simplifiedData.shift();
                     }
                     // If the debt is just a part of what is owed to the current creditor,
@@ -243,7 +246,7 @@
                             debtor: debtor.name,
                             amount: 5 * Math.round((Math.abs(creditor.difference)/5)) // round to nearest $5
                         });
-                        debtor.difference -= creditor.difference;
+                        debtor.difference += creditor.difference;
                     }
                 }
 
