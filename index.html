@@ -14,9 +14,9 @@
         <th>Expenses</th>
         <th>Adults</th>
         <th>Kids</th>
-        <th>Arrival</th>
-        <th>Departure</th>
         <th>Meals</th>
+        <th>Arrival (info only)</th>
+        <th>Departure (info only)</th>
         <th>Valid Data</th>
     </tr>
     </tbody>
@@ -82,9 +82,9 @@
                 <td class="expenses">$<input name="expenses" type="number" step="any" ${getKey(i, "exp")} onchange="update()"/></td>
                 <td class="adults"><input name="adults" type="number" ${getKey(i, "ad")} onchange="update()"/></td>
                 <td class="kids"><input name="kids" type="number" ${getKey(i, "kd")} onchange="update()"/></td>
+                <td class="meals"><input name="meals" type="number" ${getKey(i, "ml")} onchange="update()"/></td>
                 <td class="arrival"><input name="arrival" type="date" ${getKey(i, "arr")} onchange="update()"/></td>
                 <td class="departure"><input name="departure" type="date" ${getKey(i, "dep")} onchange="update()"/></td>
-                <td class="meals"><input name="meals" type="number" ${getKey(i, "ml")} onchange="update()"/></td>
                 <td class="validate"></td>`
             inputBody.appendChild(row);
         }
