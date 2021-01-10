@@ -16,6 +16,7 @@
         <th>Kids</th>
         <th>Arrival</th>
         <th>Departure</th>
+        <th>Meals</th>
         <th>Valid Data</th>
     </tr>
     </tbody>
@@ -83,6 +84,7 @@
                 <td class="kids"><input name="kids" type="number" ${getKey(i, "kd")} onchange="update()"/></td>
                 <td class="arrival"><input name="arrival" type="date" ${getKey(i, "arr")} onchange="update()"/></td>
                 <td class="departure"><input name="departure" type="date" ${getKey(i, "dep")} onchange="update()"/></td>
+                <td class="meals"><input name="meals" type="number" ${getKey(i, "ml")} onchange="update()"/></td>
                 <td class="validate"></td>`
             inputBody.appendChild(row);
         }
@@ -114,7 +116,8 @@
                 ad: row.querySelector(".adults input").value,
                 kd: row.querySelector(".kids input").value,
                 arr: row.querySelector(".arrival input").value,
-                dep: row.querySelector(".departure input").value
+                dep: row.querySelector(".departure input").value,
+                ml: row.querySelector(".meals input").value
             }
             
             dataSet.push(data);
@@ -138,16 +141,8 @@
     function addCalculatedValues(dataSet) {
 
         dataSet.forEach(data => {
-            if (!data.arr && !data.dep) {
-                data.duration = 1;
-            } else {
-                data.duration = (
-                    (new Date(data.dep).getTime() - new Date(data.arr).getTime())
-                    / (1000 * 3600 * 24)
-                ) + 1;
-            }
-            data.valid = data.name && data.exp !== "" && (+data.ad || +data.kd) && data.duration > 0;
-            data.points = (data.ad * ADULT_WEIGHT + data.kd * KID_WEIGHT) * data.duration;
+            data.valid = data.name && data.exp !== "" && (+data.ad || +data.kd);
+            data.points = (data.ad * ADULT_WEIGHT + data.kd * KID_WEIGHT) * data.ml;
 
             document.querySelector(`#${data.id} .validate`).innerHTML = data.valid ? "<span class='valid'>☑</span>" : "<span class='invalid'>X</span>";
         });
