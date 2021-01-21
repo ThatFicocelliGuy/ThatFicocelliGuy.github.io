@@ -21,6 +21,17 @@
     </tr>
     </tbody>
 </table>
+<div class="settings">
+    <label>Transaction rounding margin:
+        <input id="rounding" name="rounding" type="number" value="3">
+    </label>
+    <label>Adult Weight:
+        <input id="adultWeight" name="adultWeight" type="number" value="1">
+    </label>
+    <label>Child Weight:
+        <input id="childWeight" name="childWeight" type="number" value="0.5">
+    </label>
+</div>
 <button class="addRow" onclick="addInputRows(1)">[ + ] Add Another Row</button>
 <button class="calc" onclick="update()">Calculate!</button>
 <div id="calcs"></div>
@@ -30,10 +41,9 @@
 </html>
 
 <script>
-    const ADULT_WEIGHT = 1;
-    const KID_WEIGHT = .5;
-    const BALANCE_TOLERANCE = 10;
-    const TRANSACTION_TOLERANCE = 5;
+    let ADULT_WEIGHT = 1;
+    let KID_WEIGHT = .5;
+    let TRANSACTION_TOLERANCE = 3;
 
     async function setup() {
         const data = await getExistingData();
@@ -122,6 +132,10 @@
             
             dataSet.push(data);
         })
+
+        ADULT_WEIGHT = document.getElementById("adultWeight").value;
+        KID_WEIGHT = document.getElementById("childWeight").value;
+        TRANSACTION_TOLERANCE = Math.max(0.1, document.getElementById("rounding").value);
 
         return dataSet;
     }
@@ -239,7 +253,7 @@
                         transactions.push({
                             creditor: creditor.name,
                             debtor: debtor.name,
-                            amount: 5 * Math.round((Math.abs(creditor.difference)/5)) // round to nearest $5
+                            amount: Math.abs(creditor.difference)
                         });
                         debtor.difference += creditor.difference;
                         creditor.difference = 0;
@@ -263,7 +277,7 @@
 
 
         if (transactions.length) {
-            document.getElementById("transactions").innerHTML = `<h3>Suggested payments:</h3><span>(rounded to nearest $5)</span>
+            document.getElementById("transactions").innerHTML = `<h3>Suggested payments:</h3>
                 <table>
                     <tr>
                         <th>Payer</th>
@@ -286,7 +300,7 @@
         const balancedSubsets = subsets.filter(subset =>
                 Math.abs(
                     subset.reduce((acc, data) => +data.difference + acc, 0)
-                ) < BALANCE_TOLERANCE
+                ) < TRANSACTION_TOLERANCE
             );
 
         if (balancedSubsets.length > 1) {
@@ -367,6 +381,10 @@
     /* Hide number input arrows on Firefox */
     .expenses input[type=number] {
         -moz-appearance: textfield;
+    }
+
+    .settings label {
+        margin: 0 10px;
     }
 
 </style>
