@@ -231,7 +231,7 @@
                         transactions.push({
                             creditor: creditor.name,
                             debtor: debtor.name,
-                            amount: 5 * Math.round((Math.abs(creditor.difference)/5)) // round to nearest $5
+                            amount: Math.abs(creditor.difference)
                         });
                         creditor.difference = 0;
                         simplifiedData.shift();
@@ -242,7 +242,7 @@
                         transactions.push({
                             creditor: creditor.name,
                             debtor: debtor.name,
-                            amount: 5 * Math.round((Math.abs(debtor.difference)/5)) // round to nearest $5
+                            amount: Math.abs(debtor.difference)
                         });
                         creditor.difference += debtor.difference;
                         simplifiedData.shift();
