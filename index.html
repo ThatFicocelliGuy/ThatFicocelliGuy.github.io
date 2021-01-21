@@ -165,7 +165,7 @@
 
         validData.forEach(data => {
             data.expenseShare = (data.points * pointValue).toFixed(2);
-            data.difference = data.points ? ((data.points * pointValue) - data.exp).toFixed(2) : 0;
+            data.difference = ((data.points * pointValue) - data.exp).toFixed(2);
         })
 
         const rowsString = validData.map(data =>
@@ -195,7 +195,8 @@
     }
 
     function getTransactions(validData) {
-        const subsets = getBalancedSubsets(validData);
+        //const subsets = getBalancedSubsets(validData);
+        const subsets = [validData];
         let transactions = [];
 
         subsets.forEach(groups => {
