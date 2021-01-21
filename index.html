@@ -293,6 +293,7 @@
 
         // Find any subsets who sum to within the balance tolerance
         // This finds any sub-groups that can be treated as their own ledger with minimal loss
+        // TODO: remove all balanced subsets that intersect with existing found balanced subsets
         const balancedSubsets = subsets.filter(subset =>
                 Math.abs(
                     subset.reduce((acc, data) => +data.difference + acc, 0)
