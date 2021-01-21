@@ -22,9 +22,6 @@
     </tbody>
 </table>
 <div class="settings">
-    <label>Transaction rounding margin:
-        <input id="rounding" name="rounding" type="number" value="3">
-    </label>
     <label>Adult Weight:
         <input id="adultWeight" name="adultWeight" type="number" value="1">
     </label>
@@ -43,7 +40,7 @@
 <script>
     let ADULT_WEIGHT = 1;
     let KID_WEIGHT = .5;
-    let TRANSACTION_TOLERANCE = 3;
+    let TRANSACTION_TOLERANCE = 0.1;
 
     async function setup() {
         const data = await getExistingData();
@@ -135,7 +132,6 @@
 
         ADULT_WEIGHT = document.getElementById("adultWeight").value;
         KID_WEIGHT = document.getElementById("childWeight").value;
-        TRANSACTION_TOLERANCE = Math.max(0.1, document.getElementById("rounding").value);
 
         return dataSet;
     }
@@ -231,7 +227,7 @@
                         transactions.push({
                             creditor: creditor.name,
                             debtor: debtor.name,
-                            amount: Math.abs(creditor.difference)
+                            amount: round(Math.abs(creditor.difference))
                         });
                         creditor.difference = 0;
                         simplifiedData.shift();
@@ -242,7 +238,7 @@
                         transactions.push({
                             creditor: creditor.name,
                             debtor: debtor.name,
-                            amount: Math.abs(debtor.difference)
+                            amount: round(Math.abs(debtor.difference))
                         });
                         creditor.difference += debtor.difference;
                         simplifiedData.shift();
@@ -253,7 +249,7 @@
                         transactions.push({
                             creditor: creditor.name,
                             debtor: debtor.name,
-                            amount: Math.abs(creditor.difference)
+                            amount: round(Math.abs(creditor.difference))
                         });
                         debtor.difference += creditor.difference;
                         creditor.difference = 0;
@@ -318,6 +314,10 @@
             ),
             [[]]
         );
+    }
+
+    function round(value) {
+        return (Math.round(value * 4) / 4).toFixed(2);
     }
 
 
